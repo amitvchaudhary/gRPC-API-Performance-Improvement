@@ -2,9 +2,11 @@
 using Discount.Grpc.Entities;
 using Discount.Grpc.Protos;
 using Discount.Grpc.Repositories;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+
 
 namespace Discount.Grpc.Services
 {
@@ -35,7 +37,28 @@ namespace Discount.Grpc.Services
 
 
             var couponModel = _mapper.Map<CouponModel>(coupon);
-            return couponModel;
+            CouponModel filteredCoupon = new CouponModel();
+
+            request.FieldMask.Merge(couponModel, filteredCoupon);
+
+
+            bool amountRequested = false;
+            foreach (var item in request.FieldMask.Paths)
+            {
+               if (item == "amount")
+                {
+                    amountRequested = true;
+                }
+            }
+
+            
+
+            _logger.LogInformation($"amount requested {amountRequested}");
+
+
+            _logger.LogInformation($"Request: {request}");
+
+            return filteredCoupon;
         }
 
         public override async Task<CouponModel> CreateDiscount(CreateDiscountRequest request, ServerCallContext context)
